@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Activity = require('../models/activity');
-const Department = require('../models/department'); // Assuming you've set up the Department model
+const Department = require('../models/department'); // Import the Department model
 
 // Authentication middleware (Assuming you have user data in req.session)
 const authenticate = (req, res, next) => {
@@ -26,6 +26,20 @@ router.get('/', async (req, res) => {
         return res.json(activities);
     } catch (error) {
         return res.status(500).json({ message: 'Error fetching activities', error });
+    }
+});
+
+// Get a single activity by ID
+router.get('/:id', async (req, res) => {
+    const activityId = req.params.id;
+    try {
+        const activity = await Activity.findById(activityId);
+        if (!activity) {
+            return res.status(404).json({ message: 'Activity not found' });
+        }
+        return res.json(activity);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error fetching activity', error });
     }
 });
 
@@ -77,11 +91,11 @@ router.post('/add-to-department/:id', authenticate, authorize, async (req, res) 
             return res.status(404).json({ message: 'Activity not found' });
         }
 
-        const managerDepartment = req.session.user.department; // Assuming this is how you store manager's department
+        const managerDepartment = req.session.user.department;
         const department = await Department.findOneAndUpdate(
             { name: managerDepartment },
-            { $addToSet: { activities: activityId } }, // Add the activity to department's activities list
-            { new: true }
+            { $addToSet: { activities: activityId } },
+            { new: true, upsert: true } // Create department if it doesn't exist
         );
 
         return res.json(department);
@@ -99,10 +113,10 @@ router.delete('/remove-from-department/:id', authenticate, authorize, async (req
             return res.status(404).json({ message: 'Activity not found' });
         }
 
-        const managerDepartment = req.session.user.department; // Assuming this is how you store manager's department
+        const managerDepartment = req.session.user.department;
         const department = await Department.findOneAndUpdate(
             { name: managerDepartment },
-            { $pull: { activities: activityId } }, // Remove the activity from department's activities list
+            { $pull: { activities: activityId } },
             { new: true }
         );
 
@@ -113,5 +127,6 @@ router.delete('/remove-from-department/:id', authenticate, authorize, async (req
 });
 
 module.exports = router;
+
 
 
