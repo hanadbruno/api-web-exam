@@ -32,7 +32,7 @@ app.use(
 );
 
 // Routes
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./Routes/auth');
 const activityRoutes = require('./routes/activities');
 // Add more routes as needed
 
